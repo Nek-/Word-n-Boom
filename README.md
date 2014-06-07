@@ -20,9 +20,9 @@ Lancer l'application
 
 ```bash
 cd wordnboom
-# any webserver will do the job, i usualy use the php one
+# N'importe quel serveur web fera l'affaire, j'utilise habituellement le serveur de PHP
 php -S localhost:8000 &
 node js/server.js
 ```
 
-Then just open a browser and go to http://localhost:8000/index.html !
+Il ne vous reste plus qu'à ouvrir un navigateur et à consulter l'adresse http://localhost:8000/index.html !
