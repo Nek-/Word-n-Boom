@@ -33,7 +33,6 @@ io.on('connection', function (socket) {
         socket.emit('chat.lastMessages', { messages: messages });
 
         socket.on('chat.message', function(data) {
-            console.log (data.pseudo + ' a écrit "' + data.message + '"');
             if (messages.length >= 30) {
                 messages.shift();
             }

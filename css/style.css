@@ -104,6 +104,11 @@ html, body {
     margin-bottom: 5px;
     margin-top:    5px;
     font-size:     21pt;
+    -moz-transition: 1s all;
+    -webkit-transition: 1s all;
+    -ms-transition: 1s all;
+    -o-transition: 1s all;
+    transition: 1s all;
 }
 
 .player .word {
@@ -121,6 +126,48 @@ html, body {
     width:       300px;
 }
 
+.player.pos1 {
+    margin-top:  -200px;
+    margin-left: -400px;
+}
+
+.player.pos2 {
+    margin-top:  -200px;
+    margin-left: 200px;
+}
+
+.player.pos3 {
+    margin-top:  0px;
+    margin-left: 350px;
+}
+
+.player.pos4 {
+    margin-top:  200px;
+    margin-left: 200px;
+}
+
+.player.pos5 {
+    margin-top:  300px;
+    margin-left: -100px;
+}
+
+.player.pos6 {
+    margin-top:  200px;
+    margin-left: -400px;
+}
+
+.player.pos7 {
+    margin-top:  0px;
+    margin-left: -500px;
+}
+
+.player.pos8 {
+    margin-top:  -280px;
+    margin-left: -100px;
+}
+.player.inactive .nickname {
+    margin-top: 22px;
+}
 
 .blinker {
     font-weight:       bold;

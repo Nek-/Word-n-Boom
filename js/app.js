@@ -82,3 +82,123 @@ var ChatApp = function ($input, $messages) {
         this.$messages.append('<p>&lt;' + message.pseudo + '&gt; ' + message.message + '</p>');
     };
 };
+
+var GameApp = function ($game) {
+    this.$game     = $game;
+    this.$button   = $game.find('#buttons');
+    this.$letters  = $game.find('#letters');
+    this.templates = {
+        player: '\
+    <div class="player inactive">\
+        <img src="images/avatar_normal.png" alt="" />\
+        <p class="nickname">Nek</p>\
+        <p class="word">SOMET<span class="blinker">_</span></p>\
+    </div>',
+        letters: '<p>Trouvez un mot composé de ces lettres:<br /><span class="big"></span></p>'
+    };
+
+    this.timeout      = null;
+    this.timeoutRound = null;
+    this.clock        = 0;
+    this.clockRound   = 0;
+
+    socket.on('game.start', this.start.bind(this));
+    socket.on('game.realStart', this.realStart.bind(this));
+
+    /**
+     * When the user click on a button, the server will start accepting
+     * new guys in the game
+     *
+     * Cette méthode est exécutée lorsque l'utilisateur clique sur le bouton pour 
+     * démarrer une partie
+     */
+    this.emitStart = function () {
+        socket.emit('game.start', {});
+    };
+
+    /**
+     * React to the socket that tell a game is started
+     *
+     * Cette méthode réagit au socket qui est envoyé par le serveur
+     * pour démarrer le jeu
+     */
+    this.start = function () {
+        this.$buttons.html('<button>Rejoindre la partie</button>');
+        this.$buttons.find('button').click(this.addMe.bind(this));
+        this.startCountdown();
+    };
+
+    /**
+     * Cette méthode demande au serveur pour jouer dans la partie
+     * qui vient de démarrer
+     */
+    this.addMe = function() {
+        socket.emit('game.iWantToPlay', {});
+    };
+
+    /**
+     * Is executed after people are registered in a game
+     *
+     * Cette méthode est exécutée lorsque le compteur de temps permettant
+     * de rejoindre la partie est arrivé à expiration
+     */
+    this.realStart = function () {
+        this.gameCountdown();
+        this.newRound();
+    };
+
+    /**
+     * Cette méthode est appelée lorsque le tour d'un joueur passe
+     */
+    this.newRound = function (data) {
+        this.$letters.html(this.templates.letters);
+        this.$letters.find('.big').html(this.generateLetters());
+    };
+
+    this.generateLetters = function () {
+
+    };
+
+    this.end = function() {
+
+    };
+
+
+    ///////////////////////
+    // Countdowns
+    ///////////////////////
+
+    this.startCountdown = function() {
+        if (this.clock === null) {
+            this.clock = 30;
+        } else {
+            this.clock--;
+        }
+
+        if (this.clock !== 0) {
+            this.timeout = setTimeout(this.startCountdown.bind(this), 1000);
+        } else {
+            this.clock   = 0;
+            this.timeout = null;
+            this.realStart();
+        }
+    };
+
+    this.gameCountdown = function () {
+        if (this.clock === null) {
+            this.clock = 60*5;
+        } else {
+            this.clock--;
+        }
+
+        if (this.clock !== 0) {
+            this.timeout = setTimeout(this.gameCountdown.bind(this), 1000);
+        } else {
+            // to do at the end of the clock
+            this.clock   = null;
+            this.timeout = null;
+            this.end();
+        }
+    };
+
+};
