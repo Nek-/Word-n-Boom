@@ -114,9 +114,21 @@ var GameApp = function ($game) {
     this.timeoutRound = null;
     this.clock        = 0;
     this.clockRound   = 0;
+    this.places       = [
+        'pos7',
+        'pos3',
+        'pos8',
+        'pos5',
+        'pos1',
+        'pos4',
+        'pos6',
+        'pos2'
+    ];
 
     socket.on('game.start', this.start.bind(this));
     socket.on('game.realStart', this.realStart.bind(this));
+    socket.on('game.cantStart', this.end.bind(this));
+    socket.on('game.round', this.round.bind(this));
 
     /**
      * When the user click on a button, the server will start accepting
@@ -154,9 +166,16 @@ var GameApp = function ($game) {
      * Cette méthode est exécutée lorsque le compteur de temps permettant
      * de rejoindre la partie est arrivé à expiration
      */
-    this.realStart = function () {
-        this.gameCountdown();
-        this.newRound();
+    this.realStart = function (data) {
+        this.$buttons.html('');
+
+        $.each(data.players, function (i, value) {
+            this.addPlayer(value, i);
+        });
+    };
+
+    this.addPlayer = function (player, position) {
+
     };
 
     /**
@@ -168,7 +187,7 @@ var GameApp = function ($game) {
     };
 
     this.end = function() {
-
+        
     };
 
 

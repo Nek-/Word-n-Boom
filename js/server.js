@@ -62,6 +62,12 @@ io.on('connection', function (socket) {
             if (game) {
                 game.answer(data, socket);
             }
+        });
+
+        socket.on('game.type', function(data) {
+            if (game) {
+                game.userTypes(data, socket);
+            }
         })
     });
 
@@ -112,6 +118,12 @@ function Game () {
             io.emit('game.turn', { player: this.currentPlayer, letters: this.generateLetters() })
         } else {
             socket.emit('game.tryAgain', {});
+        }
+    };
+
+    this.userTypes = function (data, socket, user) {
+        if (user == this.currentPlayer) {
+            socket.to('other').emit('game.types', { user: data.letter });
         }
     };
 
