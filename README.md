@@ -15,6 +15,17 @@ npm install
 bower install
 ```
 
+Il faudra modifier le fichier `config.js` pour que tout fonctionne bien, une configuration classique de test peut être la suivante:
+
+```
+var Config = {
+    host: 'localhost',
+    port: 8000,
+    portSockets: 8888
+};
+```
+
+
 Lancer l'application
 --------------------
 
