@@ -82,6 +82,9 @@ html, body {
     padding:       5px 10px;
     cursor:        pointer;
 }
+#buttons p {
+    font-size: 9pt;
+}
 
 #letters {
     position:    absolute;
@@ -98,6 +101,7 @@ html, body {
 .player img {
     float: left;
     margin-right: 10px;
+    border-radius: 40px;
 }
 .player .nickname {
     color:         #1abc9c;
@@ -278,4 +282,8 @@ a:hover {
 }
 #login-center a:hover {
     color: #ecf0f1;
+}
+
+input:focus{
+    outline: 0;
 }

@@ -19,6 +19,7 @@ Array.prototype.removeValue = function(val) {
 
 var messages   = [],
     players    = [],
+    avatars    = [],
     game       = null,
     dictionary = [];
 
@@ -29,6 +30,7 @@ io.on('connection', function (socket) {
     
     socket.on('game.connection', function (data) {
         players.push(data.pseudo);
+        avatars.push(data.avatar);
         user = data.pseudo;
         console.log(user + ' vient de se connecter');
         
@@ -68,15 +70,24 @@ io.on('connection', function (socket) {
 
         socket.on('game.type', function(data) {
             if (game) {
-                game.userTypes(data, socket);
+                game.userTypes(data, socket, user);
             }
-        })
+        });
+
+        if (game !== null) {
+            if (game.canJoin()) {
+                socket.emit('game.start', {});
+            } else {
+                socket.emit('game.inProgress', { players: game.getPlayers(), avatars: game.getAvatars() });
+            }
+        }
     });
 
     socket.on('disconnect', function() {
-        players.removeValue(user);
-        socket.broadcast.emit('chat.leave', { user: user });
         if (user !== null) {
+            avatars.removeValue(avatars[players.indexOf(user)]);
+            players.removeValue(user);
+            socket.broadcast.emit('chat.leave', { user: user });
             console.log(user + ' vient de se déconnecter.');
         }
     });
@@ -84,26 +95,35 @@ io.on('connection', function (socket) {
 
 function Game () {
 
-    this.players      = [];
-    this.roundTimeout = null;
-    this.letters      = '';
+    this.avatars           = [];
+    this.players           = [];
+    this.roundTimeout      = null;
+    this.letters           = '';
+    this.waitingForPlayers = false;
 
     this.start = function () {
         io.emit('game.start', {});
+        this.waitingForPlayers = true;
         setTimeout(this.realStart.bind(this), 30000);
+    };
+
+    this.canJoin = function () {
+        return this.waitingForPlayers;
     };
 
     this.addPlayer = function (pseudo) {
         this.players.push(pseudo);
+        this.avatars.push(avatars[players.indexOf(pseudo)]);
     };
 
     this.realStart = function () {
+        this.waitingForPlayers = false;
         if (this.players.length < 2) {
             io.emit('game.cantStart', {});
             io.emit('message', {type: 'info', content: 'La partie ne peut pas démarrer car un seul joueur est connecté.'});
             this.end();
         } else {
-            io.emit('game.realStart', {players: this.players});
+            io.emit('game.realStart', {players: this.players, avatars: this.avatars});
 
             this.currentPlayer = this.players[0];
             this.startRound();
@@ -114,7 +134,7 @@ function Game () {
         io.emit('game.round', { player: this.currentPlayer, letters: this.generateLetters() });
 
         // 30min chaque tour dure 30s
-        this.roundTimeout = setTimeout(this.endRound.bind(this), 30000);
+        this.roundTimeout = setTimeout(this.endRound.bind(this), 120000);
     };
 
     this.answer = function(data, socket) {
@@ -128,12 +148,13 @@ function Game () {
 
     this.userTypes = function (data, socket, user) {
         if (user == this.currentPlayer) {
-            socket.broadcast.emit('game.types', { user: data.letter });
+            socket.broadcast.emit('game.type', { word: data.word });
         }
     };
 
     this.endRound = function () {
         io.emit('game.endRound', { pseudo: this.currentPlayer });
+        this.avatars.removeValue(this.avatars[this.players.indexOf(this.currentPlayer)]);
         this.players.removeValue(this.currentPlayer);
 
         if (this.players.length < 2) {
@@ -145,8 +166,20 @@ function Game () {
         }
     };
 
+    function areValidLetters (letters) {
+        var res = 0;
+
+        dictionary.forEach(function (value) {
+            if (value.indexOf(letters) > -1) {
+                res++;
+            }
+        });
+
+        return res > 40;
+    }
+
     this.generateLetters = function () {
-        var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        var letters = 'abcdefghijklmnopqrstuvwxyz',
             letterLength = letters.length,
             imax = Math.floor(Math.random()*2) + 1,
             res  = '';
@@ -156,7 +189,7 @@ function Game () {
             for (var i = 0; i <= imax; i++) {
                 res += letters.charAt(Math.floor(Math.random() * letterLength));
             }
-        } while(areValidLetters(res));
+        } while (!areValidLetters(res));
 
         this.letters = res;
 
@@ -174,22 +207,11 @@ function Game () {
     };
 
     function isValidAnswer (answer) {
-        if (dictionary.indexOf(answer.toLowerCase()) !== -1) {
+        if (dictionary.indexOf(answer.trim().toLowerCase()) !== -1) {
             return true;
         }
 
         return false;
-    }
-
-    function areValidLetters (letters) {
-        var res = false;
-        dictionary.forEach(function (value) {
-            if (value.indexOf(letters) > -1) {
-                res = true;
-            }
-        });
-
-        return res;
     }
 
     /**
@@ -197,6 +219,14 @@ function Game () {
      */
     this.end = function() {
         game = null;
+    };
+
+    this.getPlayers = function () {
+        return this.players;
+    };
+
+    this.getAvatars = function () {
+        return this.avatars;
     };
 
 }
