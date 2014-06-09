@@ -3,6 +3,7 @@ html, body {
     height: 100%;
     margin: 0;
     font-family: Arial, sans-serif;
+    overflow:    hidden;
 }
 
 #chat {
@@ -22,11 +23,20 @@ html, body {
     overflow:   hidden;
 }
 #message-box input {
-    max-width:  100%;
+    width:      100%;
     border:     none;
     background: #2980b9;
     color:      #ffffff;
     padding:    5px;
+}
+
+#messages-list {
+    position:   absolute;
+    top:        0px;
+    left:       0px;
+    right:      0px;
+    bottom:     35px;
+    overflow-y: scroll;
 }
 
 #messages-list p:nth-child(odd) {
@@ -51,6 +61,7 @@ html, body {
     margin-left: 280px;
     height:      100%;
     position:    relative;
+    overflow:    hidden;
 }
 
 #bomb {
@@ -286,4 +297,21 @@ a:hover {
 
 input:focus{
     outline: 0;
+}
+
+.notification {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #2980b9;
+    padding: 11px;
+    font-size: 10pt;
+    width: 350px;
+    color: white;
+    opacity: 0.80;
+    border-radius: 4px;
+}
+
+.notification.error {
+    background: #c0392b;
 }

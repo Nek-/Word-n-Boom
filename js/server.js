@@ -138,7 +138,9 @@ function Game () {
     };
 
     this.answer = function(data, socket) {
+        console.log('Réponse: '+ data.answer);
         if (isValidAnswer(data.answer)) {
+            console.log('... qui est valide');
             this.nextPlayer();
             io.emit('game.turn', { player: this.currentPlayer, letters: this.generateLetters() })
         } else {

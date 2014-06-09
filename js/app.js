@@ -1,4 +1,18 @@
+function notify (message, type, time) {
+    var $element = $('<div class="notification"></div>');
 
+    $element.append(message);
+
+    if (type) {
+        $element.addClass(type);
+    }
+
+    $('body').append($element);
+
+    setTimeout(function() {
+        $element.fadeOut(function() { $element.remove(); });
+    }, time || 5000);
+}
 
 var socket   = io('http://nantes.nekland.fr:8888'),
     gameData = {
@@ -25,7 +39,7 @@ $(document).ready(function () {
         ;
 
         if (pseudo.trim().length === 0 && gameData.players.indexOf(pseudo) !== '-1') {
-            alert('Pseudo invalide.');
+            notify('Pseudo invalide.', 'error');
             return;
         }
 
@@ -67,7 +81,7 @@ function launchApp (pseudo, email) {
             messageContent = data.content;
 
         // ça serait certainement mieux de l'ajouter dans le dom avec une box, un truc comme as
-        console.log(messageType, messageContent);
+        notify(messageContent, messageType);
     });
 
     new GameApp($('#game'));
@@ -83,9 +97,11 @@ var ChatApp = function ($input, $messages) {
         if (e.which === 13) {
             var message = { pseudo: gameData.idents.pseudo, message: $input.val() };
 
-            socket.emit('chat.message', message);
-            this.addMessage(message);
-            this.$input.val('');
+            if (message.message !== '') {
+                socket.emit('chat.message', message);
+                this.addMessage(message);
+                this.$input.val('');
+            }
         }
 
         e.stopPropagation();
@@ -103,6 +119,9 @@ var ChatApp = function ($input, $messages) {
 
     this.addMessage = function (message) {
         this.$messages.append('<p>&lt;' + message.pseudo + '&gt; ' + message.message + '</p>');
+        this.$messages.animate({
+            scrollTop: this.$messages.prop("scrollHeight") - this.$messages.height()
+        }, 100);
     };
 };
 
@@ -273,7 +292,7 @@ var GameApp = function ($game) {
     };
 
     this.winner = function (data) {
-        alert(data.pseudo + ' a remporté la partie :) ');
+        notify(data.pseudo + ' a remporté la partie :) ');
         this.end();
     };
 
@@ -288,7 +307,6 @@ var GameApp = function ($game) {
     };
 
     this.currentPlayerTypes = function (data) {
-        console.log(data);
         this.getCurrentPlayerDom().find('.text').html(data.word);
     };
 
