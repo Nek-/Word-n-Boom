@@ -2,6 +2,7 @@
     "name": "word-n-boom",
     "version": "0.0.1",
     "dependencies": {
-        "jquery": "*"
+        "jquery": "*",
+        "js-md5": "*"
     }
 }

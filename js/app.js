@@ -1,7 +1,13 @@
 
 
 var socket   = io('http://localhost:8888'),
-    gameData = {};
+    gameData = {
+        idents: {
+            pseudo:   null,
+            email:    null,
+            gravatar: null
+        }
+    };
 
 socket.on('game.players', function (data) {
     gameData.players = data.players;
@@ -37,10 +43,9 @@ $(document).ready(function () {
 
 function launchApp (pseudo, email) {
 
-    gameData.idents = {
-        pseudo: pseudo,
-        email:  email
-    };
+    gameData.idents.pseudo   = pseudo;
+    gameData.idents.email    = email;
+    gameData.idents.gravatar = 'http://www.gravatar.com/avatar/' + md5(email) + '.jpg?s=' + '80';
 
     var $login = $('#login');
     $login.addClass('closed');
@@ -63,6 +68,8 @@ function launchApp (pseudo, email) {
         // ça serait certainement mieux de l'ajouter dans le dom avec une box, un truc comme as
         console.log(messageType, messageContent);
     });
+
+    new GameApp($('#game'));
 }
 
 
@@ -98,14 +105,14 @@ var ChatApp = function ($input, $messages) {
 
 var GameApp = function ($game) {
     this.$game     = $game;
-    this.$button   = $game.find('#buttons');
+    this.$buttons  = $game.find('#buttons');
     this.$letters  = $game.find('#letters');
     this.templates = {
         player: '\
     <div class="player inactive">\
         <img src="images/avatar_normal.png" alt="" />\
-        <p class="nickname">Nek</p>\
-        <p class="word">SOMET<span class="blinker">_</span></p>\
+        <p class="nickname"></p>\
+        <p class="word"><span class="blinker">_</span></p>\
     </div>',
         letters: '<p>Trouvez un mot composé de ces lettres:<br /><span class="big"></span></p>'
     };
@@ -124,11 +131,7 @@ var GameApp = function ($game) {
         'pos6',
         'pos2'
     ];
-
-    socket.on('game.start', this.start.bind(this));
-    socket.on('game.realStart', this.realStart.bind(this));
-    socket.on('game.cantStart', this.end.bind(this));
-    socket.on('game.round', this.round.bind(this));
+    this.currentPlayer = null;
 
     /**
      * When the user click on a button, the server will start accepting
@@ -157,7 +160,9 @@ var GameApp = function ($game) {
      * qui vient de démarrer
      */
     this.addMe = function() {
+        console.log('me');
         socket.emit('game.iWantToPlay', {});
+        this.$buttons.html('');
     };
 
     /**
@@ -175,19 +180,51 @@ var GameApp = function ($game) {
     };
 
     this.addPlayer = function (player, position) {
+        var $template = $(this.template.player);
+        $template.addClass(this.places[position]);
+        $template.find('.nickname').html(player);
 
+        this.$game.append($template);
     };
 
     /**
-     * Cette méthode est appelée lorsque le tour d'un joueur passe
+     * Cette méthode est appelée lorsqu'un joueur a perdu et qu'on démarre un nouveau tour
      */
     this.newRound = function (data) {
-        this.$letters.html(this.templates.letters);
-        this.$letters.find('.big').html(this.generateLetters());
+        this.turn(data);
+    };
+
+    this.turn = function (data) {
+        this.currentPlayer = data.player;
+        this.$letters.html(this.template.letters);
+        this.$letters.find('.big').html(data.letters);
+/*
+        if (data.pseudo === gameData.idents.pseudo) {
+            this.myTurn();
+        } else {
+            this.
+        }
+*/
+    };
+
+    this.myTurn = function () {
+    };
+
+    this.isMyTurn = function () {
+        return this.currentPlayer == gameData.idents.pseudo;
+    }
+
+    this.onKeyPressed = function (e) {
+        console.log(e.metaKey);
+        if (this.isMyTurn()) {
+
+        }
     };
 
     this.end = function() {
-        
+        this.$game.find('.player').remove();
+        this.$buttons.html('<button>Lancer une nouvelle partie</button>');
+        this.$buttons.find('button').click(this.emitStart.bind(this));
     };
 
 
@@ -212,4 +249,13 @@ var GameApp = function ($game) {
         }
     };
 
+
+    socket.on('game.start', this.start.bind(this));
+    socket.on('game.realStart', this.realStart.bind(this));
+    socket.on('game.cantStart', this.end.bind(this));
+    socket.on('game.round', this.newRound.bind(this));
+
+    this.$game.keypress(this.onKeyPressed.bind(this));
+    
+    this.end();
 };

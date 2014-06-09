@@ -1,6 +1,6 @@
-var app = require('http').createServer(handler);
-var io  = require('socket.io')(app);
-var fs  = require('fs');
+var app        = require('http').createServer(handler);
+var io         = require('socket.io')(app);
+var fs         = require('fs');
 var lineReader = require('line-reader');
 
 app.listen(8888);
@@ -17,10 +17,10 @@ Array.prototype.removeValue = function(val) {
 }
 
 
-var messages = [],
-    players  = []
-    game     = null,
-    dictionary;
+var messages   = [],
+    players    = [],
+    game       = null,
+    dictionary = [];
 
 io.on('connection', function (socket) {
     var user = null;
@@ -47,12 +47,14 @@ io.on('connection', function (socket) {
             if (game !== null) {
                 socket.emit('message', {type: 'error', content: 'Une partie est déjà en cours !'});
             } else {
+                console.log('création d\'une nouvelle partie');
                 game = new Game();
                 game.start();
             }
         });
 
         socket.on('game.iWantToPlay', function () {
+            console.log(user + ' a rejoint la partie');
             if (game) {
                 game.addPlayer(user);
             }
@@ -82,6 +84,7 @@ function Game () {
 
     this.players      = [];
     this.roundTimeout = null;
+    this.letters      = '';
 
     this.start = function () {
         io.emit('game.start', {});
@@ -148,6 +151,8 @@ function Game () {
         for (var i = 0; i <= imax; i++) {
             res += letters.charAt(Math.floor(Math.random() * letterLength));
         }
+
+        this.letters = res;
 
         return res;
     };
