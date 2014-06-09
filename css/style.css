@@ -37,6 +37,7 @@ html, body {
     right:      0px;
     bottom:     35px;
     overflow-y: scroll;
+    overflow-x: hidden; 
 }
 
 #messages-list p:nth-child(odd) {
