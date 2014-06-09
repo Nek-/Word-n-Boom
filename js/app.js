@@ -14,7 +14,7 @@ function notify (message, type, time) {
     }, time || 5000);
 }
 
-var socket   = io('http://nantes.nekland.fr:8888'),
+var socket   = null,
     gameData = {
         idents: {
             pseudo:   null,
@@ -23,36 +23,44 @@ var socket   = io('http://nantes.nekland.fr:8888'),
         }
     };
 
-socket.on('game.players', function (data) {
-    gameData.players = data.players;
-});
+
 
 $(document).ready(function () {
 
-    $('#login-form').submit(function (e) {
-        e.preventDefault();
+    $.getScript('http://' + Config.host +':' + Config.portSockets + '/socket.io/socket.io.js', function() {
+        
+        socket = io('http://'+ Config.host + ':' + Config.portSockets);
+        socket.on('game.players', function (data) {
+            gameData.players = data.players;
+        });
 
-        var $pseudo = $('#pseudo'),
-            pseudo  = $pseudo.val(),
-            $email  = $('#email'),
-            email   = $email.val()
-        ;
 
-        if (pseudo.trim().length === 0 && gameData.players.indexOf(pseudo) !== '-1') {
-            notify('Pseudo invalide.', 'error');
-            return;
-        }
+        $('#login-form').submit(function (e) {
+            e.preventDefault();
 
-        if (email.trim().length === 0) {
-            if (!confirm('Attention, vous n\'avez pas précisé votre adresse email, vous n\'aurez pas d\'avatar. Voulez vous continuer ?')) {
+            var $pseudo = $('#pseudo'),
+                pseudo  = $pseudo.val(),
+                $email  = $('#email'),
+                email   = $email.val()
+            ;
+
+            if (pseudo.trim().length === 0 && gameData.players.indexOf(pseudo) !== '-1') {
+                notify('Pseudo invalide.', 'error');
                 return;
             }
-        }
 
-        launchApp(pseudo, email);
+            if (email.trim().length === 0) {
+                if (!confirm('Attention, vous n\'avez pas précisé votre adresse email, vous n\'aurez pas d\'avatar. Voulez vous continuer ?')) {
+                    return;
+                }
+            }
 
-        return false;
+            launchApp(pseudo, email);
+
+            return false;
+        });
     });
+    //$('head').append('<script type="text/javascript" src=""></script>');
 });
 
 function launchApp (pseudo, email) {
@@ -230,7 +238,7 @@ var GameApp = function ($game) {
     };
 
     this.endRound = function (data) {
-        $template.find('.nickname:contains('+data.pseudo+')').css('color', '#c0392b');
+        this.$game.find('.nickname:contains('+data.pseudo+')').css('color', '#c0392b');
     };
 
     /**
