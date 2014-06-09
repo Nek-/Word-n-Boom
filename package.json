@@ -1,9 +1,14 @@
 {
-  "name": "word-n-boom",
-  "version": "0.0.1",
-  "description": "Simple little game for school",
-  "dependencies": {
-    "socket.io": "^1.0.4",
-    "sugar": "^1.4.1"
-  }
+    "name":         "word-n-boom",
+    "version":      "0.0.1",
+    "private":      true,
+    "description":  "Simple little game for school",
+    "dependencies": {
+        "socket.io": "^1.0.4",
+        "line-reader": "^0.2.3"
+    },
+    "repository": {
+        "type": "git",
+        "url":  "https://github.com/Nek-/Word-n-Boom.git"
+    }
 }
