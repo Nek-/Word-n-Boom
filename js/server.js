@@ -40,21 +40,21 @@ io.on('connection', function (socket) {
                 messages.shift();
             }
             messages.push(data);
-            socket.to('other').emit('chat.message');
+            socket.broadcast.emit('chat.message', { pseudo: user, message: data.message });
         });
 
         socket.on('game.start', function(){
             if (game !== null) {
                 socket.emit('message', {type: 'error', content: 'Une partie est déjà en cours !'});
             } else {
-                console.log('création d\'une nouvelle partie');
+                console.log('Création d\'une nouvelle partie.');
                 game = new Game();
                 game.start();
             }
         });
 
         socket.on('game.iWantToPlay', function () {
-            console.log(user + ' a rejoint la partie');
+            console.log(user + ' a rejoint la partie.');
             if (game) {
                 game.addPlayer(user);
             }
@@ -75,8 +75,10 @@ io.on('connection', function (socket) {
 
     socket.on('disconnect', function() {
         players.removeValue(user);
-        socket.to('other').emit('chat.leave', { user: user });
-        console.log(user + ' vient de se déconnecter');
+        socket.broadcast.emit('chat.leave', { user: user });
+        if (user !== null) {
+            console.log(user + ' vient de se déconnecter.');
+        }
     });
 });
 
@@ -126,7 +128,7 @@ function Game () {
 
     this.userTypes = function (data, socket, user) {
         if (user == this.currentPlayer) {
-            socket.to('other').emit('game.types', { user: data.letter });
+            socket.broadcast.emit('game.types', { user: data.letter });
         }
     };
 
@@ -134,10 +136,11 @@ function Game () {
         io.emit('game.endRound', { pseudo: this.currentPlayer });
         this.players.removeValue(this.currentPlayer);
 
-        if (this.player.length < 2) {
-            io.emit('game.winner', {pseudo: this.player[0]});
+        if (this.players.length < 2) {
+            io.emit('game.winner', {pseudo: this.players[0]});
+            this.end();
         } else {
-            this.currentPlayer = this.player[0];
+            this.currentPlayer = this.players[0];
             this.startRound();
         }
     };
@@ -148,9 +151,12 @@ function Game () {
             imax = Math.floor(Math.random()*2) + 1,
             res  = '';
 
-        for (var i = 0; i <= imax; i++) {
-            res += letters.charAt(Math.floor(Math.random() * letterLength));
-        }
+        do {
+            res = '';
+            for (var i = 0; i <= imax; i++) {
+                res += letters.charAt(Math.floor(Math.random() * letterLength));
+            }
+        } while(areValidLetters(res));
 
         this.letters = res;
 
@@ -168,11 +174,22 @@ function Game () {
     };
 
     function isValidAnswer (answer) {
-        if (dictionary.indexOf(answer) !== -1) {
+        if (dictionary.indexOf(answer.toLowerCase()) !== -1) {
             return true;
         }
 
         return false;
+    }
+
+    function areValidLetters (letters) {
+        var res = false;
+        dictionary.forEach(function (value) {
+            if (value.indexOf(letters) > -1) {
+                res = true;
+            }
+        });
+
+        return res;
     }
 
     /**

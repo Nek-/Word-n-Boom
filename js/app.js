@@ -1,6 +1,6 @@
 
 
-var socket   = io('http://localhost:8888'),
+var socket   = io('http://nantes.nekland.fr:8888'),
     gameData = {
         idents: {
             pseudo:   null,
@@ -45,7 +45,7 @@ function launchApp (pseudo, email) {
 
     gameData.idents.pseudo   = pseudo;
     gameData.idents.email    = email;
-    gameData.idents.gravatar = 'http://www.gravatar.com/avatar/' + md5(email) + '.jpg?s=' + '80';
+    gameData.idents.gravatar = 'http://www.gravatar.com/avatar/' + md5(email) + '.jpg?s=' + '80&d=' + encodeURI('http://nantes.nekland.fr:8000/images/avatar_normal.png');
 
     var $login = $('#login');
     $login.addClass('closed');
@@ -86,10 +86,12 @@ var ChatApp = function ($input, $messages) {
             this.addMessage(message);
             this.$input.val('');
         }
+
+        e.stopPropagation();
     }.bind(this));
 
-    socket.on('chat.message', function () {
-        self.addMessage();
+    socket.on('chat.message', function (data) {
+        self.addMessage(data);
     });
 
     socket.on('chat.lastMessages', function (data) {
@@ -107,12 +109,13 @@ var GameApp = function ($game) {
     this.$game     = $game;
     this.$buttons  = $game.find('#buttons');
     this.$letters  = $game.find('#letters');
+    this.$me       = null;
     this.templates = {
         player: '\
     <div class="player inactive">\
         <img src="images/avatar_normal.png" alt="" />\
         <p class="nickname"></p>\
-        <p class="word"><span class="blinker">_</span></p>\
+        <p class="word"><span class="text"></span><span class="blinker">_</span></p>\
     </div>',
         letters: '<p>Trouvez un mot composé de ces lettres:<br /><span class="big"></span></p>'
     };
@@ -132,6 +135,7 @@ var GameApp = function ($game) {
         'pos2'
     ];
     this.currentPlayer = null;
+    this.players       = [];
 
     /**
      * When the user click on a button, the server will start accepting
@@ -160,7 +164,6 @@ var GameApp = function ($game) {
      * qui vient de démarrer
      */
     this.addMe = function() {
-        console.log('me');
         socket.emit('game.iWantToPlay', {});
         this.$buttons.html('');
     };
@@ -173,16 +176,22 @@ var GameApp = function ($game) {
      */
     this.realStart = function (data) {
         this.$buttons.html('');
+        this.players = data.players;
 
         $.each(data.players, function (i, value) {
             this.addPlayer(value, i);
-        });
+        }.bind(this));
     };
 
     this.addPlayer = function (player, position) {
-        var $template = $(this.template.player);
+        var $template = $(this.templates.player);
         $template.addClass(this.places[position]);
         $template.find('.nickname').html(player);
+
+        if (player === gameData.idents.pseudo) {
+
+            this.$me = $template;
+        }
 
         this.$game.append($template);
     };
@@ -196,15 +205,13 @@ var GameApp = function ($game) {
 
     this.turn = function (data) {
         this.currentPlayer = data.player;
-        this.$letters.html(this.template.letters);
+        this.$letters.html(this.templates.letters);
         this.$letters.find('.big').html(data.letters);
-/*
-        if (data.pseudo === gameData.idents.pseudo) {
-            this.myTurn();
-        } else {
-            this.
-        }
-*/
+
+        // Retire la classe inactive
+        // Au joueur qui joue
+        this.$game.find('.player:not(.inactive)').addClass('inactive');
+        this.$game.find('.player.'+this.places[this.players.indexOf(data.player)]).removeClass('inactive');
     };
 
     this.myTurn = function () {
@@ -212,12 +219,17 @@ var GameApp = function ($game) {
 
     this.isMyTurn = function () {
         return this.currentPlayer == gameData.idents.pseudo;
-    }
+    };
 
     this.onKeyPressed = function (e) {
-        console.log(e.metaKey);
         if (this.isMyTurn()) {
 
+            if (e.which === 13) {
+                socket.emit('game.answer', { answer: this.$me.find('.text').html() });
+            } else {
+                this.$me.removeClass('fail');
+                this.$me.find('.text').append(String.fromCharCode(e.charCode));
+            }
         }
     };
 
@@ -225,12 +237,22 @@ var GameApp = function ($game) {
         this.$game.find('.player').remove();
         this.$buttons.html('<button>Lancer une nouvelle partie</button>');
         this.$buttons.find('button').click(this.emitStart.bind(this));
+        this.$letters.html('');
+    };
+
+    this.winner = function (data) {
+        alert(data.pseudo + ' a remporté la partie :) ');
+        this.end();
+    };
+
+    this.tryAgain = function () {
+        this.$me.addClass('fail');
     };
 
 
-    ///////////////////////
-    // Countdowns
-    ///////////////////////
+    ///////////////////////////////////////
+    // Countdowns (inutiles finalement :'))
+    ///////////////////////////////////////
 
     this.startCountdown = function() {
         if (this.clock === null) {
@@ -254,8 +276,10 @@ var GameApp = function ($game) {
     socket.on('game.realStart', this.realStart.bind(this));
     socket.on('game.cantStart', this.end.bind(this));
     socket.on('game.round', this.newRound.bind(this));
+    socket.on('game.winner', this.winner.bind(this));
+    socket.on('game.tryAgain', this.tryAgain.bind(this));
 
-    this.$game.keypress(this.onKeyPressed.bind(this));
+    $(document).keypress(this.onKeyPressed.bind(this));
     
     this.end();
 };
