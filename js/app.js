@@ -277,7 +277,11 @@ var GameApp = function ($game) {
                 $text.html(text.substring(0, text.length-1));
             } else {
                 this.$me.removeClass('fail');
-                $text.html($text.html() + String.fromCharCode(e.which));
+                var letter = String.fromCharCode(e.which);
+
+                if (letterExists(letter)) {
+                    $text.html($text.html() + letter);
+                }
             }
 
             socket.emit('game.type', { word: $text.html() });
@@ -309,6 +313,16 @@ var GameApp = function ($game) {
     this.currentPlayerTypes = function (data) {
         this.getCurrentPlayerDom().find('.text').html(data.word);
     };
+
+    function letterExists(letter) {
+        var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        if(alphabet.indexOf(letter) > -1) {
+            return true;
+        }
+
+        return false;
+    }
 
 
     socket.on('game.start', this.start.bind(this));
