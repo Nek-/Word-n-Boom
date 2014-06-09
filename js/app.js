@@ -229,6 +229,10 @@ var GameApp = function ($game) {
         this.turn(data);
     };
 
+    this.endRound = function (data) {
+        $template.find('.nickname:contains('+data.pseudo+')').css('color', '#c0392b');
+    };
+
     /**
      * Chaque fois que quelqu'un trouve la bonne réponse
      * cette méthode est appelée pour passer à la personne suivante
@@ -334,6 +338,7 @@ var GameApp = function ($game) {
     socket.on('game.tryAgain', this.tryAgain.bind(this));
     socket.on('game.inProgress', this.showGame.bind(this));
     socket.on('game.type', this.currentPlayerTypes.bind(this));
+    socket.on('game.endRound', this.endRound.bind(this));
 
     $(document).unbind('keydown').bind('keydown', this.onKeyPressed.bind(this));
     
