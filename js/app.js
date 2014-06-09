@@ -50,6 +50,19 @@ function launchApp (pseudo, email) {
     var chat = new ChatApp($('#message-box input'), $('#messages-list'));
 
     socket.emit('game.connection', { pseudo: pseudo, email: email });
+
+    // Lorsqu'un message doit être affiché
+    socket.on('message', function(data) {
+
+        // Le type du message peut être
+        //   - info
+        //   - error
+        var messageType    = data.type,
+            messageContent = data.content;
+
+        // ça serait certainement mieux de l'ajouter dans le dom avec une box, un truc comme as
+        console.log(messageType, messageContent);
+    });
 }
 
 
@@ -125,7 +138,6 @@ var GameApp = function ($game) {
     this.start = function () {
         this.$buttons.html('<button>Rejoindre la partie</button>');
         this.$buttons.find('button').click(this.addMe.bind(this));
-        this.startCountdown();
     };
 
     /**
@@ -155,10 +167,6 @@ var GameApp = function ($game) {
         this.$letters.find('.big').html(this.generateLetters());
     };
 
-    this.generateLetters = function () {
-
-    };
-
     this.end = function() {
 
     };
@@ -175,29 +183,13 @@ var GameApp = function ($game) {
             this.clock--;
         }
 
+        // Place to show the countdown
+
         if (this.clock !== 0) {
             this.timeout = setTimeout(this.startCountdown.bind(this), 1000);
         } else {
             this.clock   = 0;
             this.timeout = null;
-            this.realStart();
-        }
-    };
-
-    this.gameCountdown = function () {
-        if (this.clock === null) {
-            this.clock = 60*5;
-        } else {
-            this.clock--;
-        }
-
-        if (this.clock !== 0) {
-            this.timeout = setTimeout(this.gameCountdown.bind(this), 1000);
-        } else {
-            // to do at the end of the clock
-            this.clock   = null;
-            this.timeout = null;
-            this.end();
         }
     };
 

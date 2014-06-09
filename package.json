@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Simple little game for school",
   "dependencies": {
-    "socket.io": "^1.0.4"
+    "socket.io": "^1.0.4",
+    "sugar": "^1.4.1"
   }
 }
